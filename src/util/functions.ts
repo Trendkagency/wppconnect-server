@@ -317,11 +317,24 @@ export async function autoDownload(client: any, req: any, message: any) {
   }
 }
 
+/**
+ * The server calls itself. HOST is often a bind address set by the platform
+ * (Coolify / Docker: HOST=0.0.0.0) with no scheme, which made the URL
+ * "0.0.0.0:21465/api/..." invalid ("TypeError: Invalid URL"), so saved
+ * sessions were never restarted after a deploy.
+ */
+export function selfBaseUrl(config: any): string {
+  let host = String(config.host || 'http://localhost').trim();
+  if (!/^https?:\/\//i.test(host)) host = `http://${host}`;
+  // A wildcard bind address is not a destination.
+  host = host.replace(/\/\/(0\.0\.0\.0|\[?::\]?)(?=[:/]|$)/, '//localhost');
+  host = host.replace(/\/+$/, '');
+  return /:\d+$/.test(host) ? host : `${host}:${config.port}`;
+}
+
 export async function startAllSessions(config: any, logger: any) {
   try {
-    await api.post(
-      `${config.host}:${config.port}/api/${config.secretKey}/start-all`
-    );
+    await api.post(`${selfBaseUrl(config)}/api/${config.secretKey}/start-all`);
   } catch (e) {
     logger.error(e);
   }
