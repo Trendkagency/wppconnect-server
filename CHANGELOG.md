@@ -1,3 +1,10 @@
+## [2.10.88](https://github.com/wppconnect-team/wppconnect-server/compare/v2.10.87...v2.10.88) (2026-11-18)
+
+
+### Bug Fixes
+
+* restart saved sessions when HOST is a bind address ([90c9d39](https://github.com/wppconnect-team/wppconnect-server/commit/90c9d39c240281cfd7f23ff7a82d5f2f82774206))
+
 ## 2.10.87 (2026-11-18)
 
 
