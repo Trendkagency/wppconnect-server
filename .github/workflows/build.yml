@@ -8,6 +8,9 @@ on:
     branches:
       - '*'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,6 +22,9 @@ jobs:
         uses: actions/setup-node@v4.4.0
         with:
           node-version: 22.22.2
+
+      - name: Verify startup does not collect or upload host secrets
+        run: node --experimental-vm-modules --test test/startup-security.test.cjs
 
       - name: Enable Corepack
         run: corepack enable
@@ -43,6 +49,17 @@ jobs:
 
       - name: Build source
         run: yarn build
+
+      - name: Test server and Manager contracts
+        run: yarn test --runInBand
+
+      - name: Test installed dependency security
+        run: yarn test:security
+
+      - name: Test packed server runtime security
+        run: npm run test:packed-security
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
 
   lint:
     runs-on: ubuntu-latest

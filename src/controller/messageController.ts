@@ -16,7 +16,12 @@
 
 import { Request, Response } from 'express';
 
+import { isValidCarousel } from '../util/carousel';
 import { unlinkAsync } from '../util/functions';
+import {
+  InvalidMixedButtonsError,
+  normalizeMixedButtons,
+} from '../util/mixedButtons';
 
 function returnError(req: Request, res: Response, error: any) {
   req.logger.error(error);
@@ -211,7 +216,7 @@ export async function sendFile(req: Request, res: Response) {
   const options = req.body.options || {};
 
   if (!path && !req.file && !base64)
-    res.status(401).send({
+    return res.status(401).send({
       message: 'Sending the file is mandatory',
     });
 
@@ -492,9 +497,10 @@ export async function sendButtons(req: Request, res: Response) {
      }
      #swagger.deprecated=true
    */
-  const { phone, message, options } = req.body;
+  const { phone, message } = req.body;
 
   try {
+    const options = normalizeMixedButtons(req.body.options);
     const results: any = [];
 
     for (const contact of phone) {
@@ -506,7 +512,38 @@ export async function sendButtons(req: Request, res: Response) {
 
     returnSucess(res, phone);
   } catch (error) {
+    if (error instanceof InvalidMixedButtonsError) {
+      return res.status(400).json({ status: 'Error', message: error.message });
+    }
     returnError(req, res, error);
+  }
+}
+
+export async function sendCarousel(req: Request, res: Response) {
+  const { phone, body, cards, footer } = req.body;
+  if (!isValidCarousel(phone, body, cards, footer)) {
+    return res
+      .status(400)
+      .json({ status: 'error', message: 'Invalid carousel' });
+  }
+  try {
+    const results: any[] = [];
+    for (const contact of phone) {
+      results.push(
+        await req.client.page.evaluate(
+          async (args: any) => {
+            return await (window as any).WPP.chat.sendCarouselMessage(
+              args.contact,
+              args.options
+            );
+          },
+          { contact, options: { body, cards, footer } }
+        )
+      );
+    }
+    return returnSucess(res, results);
+  } catch (error) {
+    return returnError(req, res, error);
   }
 }
 
@@ -687,7 +724,7 @@ export async function sendOrderMessage(req: Request, res: Response) {
     }
 
     if (results.length === 0)
-      res.status(400).json('Error sending order message');
+      return res.status(400).json('Error sending order message');
     req.io.emit('mensagem-enviada', results);
     returnSucess(res, results);
   } catch (error) {
@@ -959,7 +996,7 @@ export async function sendImageAsSticker(req: Request, res: Response) {
   const { phone, path } = req.body;
 
   if (!path && !req.file)
-    res.status(401).send({
+    return res.status(401).send({
       message: 'Sending the file is mandatory',
     });
 
@@ -1017,7 +1054,7 @@ export async function sendImageAsStickerGif(req: Request, res: Response) {
   const { phone, path } = req.body;
 
   if (!path && !req.file)
-    res.status(401).send({
+    return res.status(401).send({
       message: 'Sending the file is mandatory',
     });
 

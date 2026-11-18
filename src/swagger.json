@@ -93,6 +93,26 @@
     },
     "/api/{secretkey}/show-all-sessions": {
       "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "secretkey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "410": {
+            "description": "Gone"
+          }
+        }
+      }
+    },
+    "/api/show-all-sessions": {
+      "post": {
         "tags": [
           "Auth"
         ],
@@ -100,12 +120,11 @@
         "operationId": "showAllSessions",
         "parameters": [
           {
-            "name": "secretkey",
-            "in": "path",
+            "name": "x-secret-key",
+            "in": "header",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "THISISMYSECURETOKEN"
+              "type": "string"
             }
           }
         ],
@@ -117,11 +136,7 @@
             "description": "Bad Request"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
+        "security": []
       }
     },
     "/api/{secretkey}/start-all": {
@@ -412,6 +427,9 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
           },
           "500": {
             "description": "Internal Server Error"
@@ -1684,8 +1702,8 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "400": {
+            "description": "Bad Request"
           }
         },
         "security": [
@@ -1694,6 +1712,49 @@
           }
         ],
         "deprecated": true
+      }
+    },
+    "/api/{session}/send-carousel": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "session",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "example": "any"
+                  },
+                  "body": {
+                    "example": "any"
+                  },
+                  "cards": {
+                    "example": "any"
+                  },
+                  "footer": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/{session}/send-list-message": {
@@ -3683,6 +3744,18 @@
                   "onlyUsers": {
                     "type": "boolean"
                   },
+                  "onlyNewsletter": {
+                    "type": "boolean"
+                  },
+                  "onlyCommunities": {
+                    "type": "boolean"
+                  },
+                  "onlyArchived": {
+                    "type": "boolean"
+                  },
+                  "ignoreGroupMetadata": {
+                    "type": "boolean"
+                  },
                   "onlyWithUnreadMessage": {
                     "type": "boolean"
                   },
@@ -3979,7 +4052,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": "5521999999999"
+              "example": "5521999999999@c.us"
             }
           },
           {
@@ -3989,6 +4062,20 @@
               "example": "false"
             },
             "in": "query"
+          },
+          {
+            "name": "isNewsletter",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isLid",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4579,8 +4666,8 @@
           "200": {
             "description": "OK"
           },
-          "401": {
-            "description": "Unauthorized"
+          "400": {
+            "description": "Bad Request"
           },
           "500": {
             "description": "Internal Server Error"
@@ -7845,27 +7932,46 @@
     },
     "/api/{secretkey}/backup-sessions": {
       "get": {
-        "tags": [
-          "Misc"
-        ],
-        "description": "Please, open the router in your browser, in swagger this not run",
-        "produces": [
-          "application/zip"
-        ],
+        "description": "",
         "parameters": [
           {
             "name": "secretkey",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "THISISMYSECURETOKEN"
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "410": {
+            "description": "Gone"
+          }
+        }
+      }
+    },
+    "/api/backup-sessions": {
+      "post": {
+        "tags": [
+          "Misc"
+        ],
+        "description": "Download a backup using the operator secret header.",
+        "produces": [
+          "application/zip"
+        ],
+        "parameters": [
+          {
+            "name": "x-secret-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "A ZIP file contaings your backup. Please, open this link in your browser",
+            "description": "A ZIP file containing the session backup",
             "content": {
               "application/zip": {
                 "schema": {}
@@ -8670,6 +8776,9 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "409": {
+            "description": "Conflict"
           }
         },
         "security": [
